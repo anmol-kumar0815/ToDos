@@ -40,9 +40,10 @@ export function Dashboard({ userId, workspaces, workspace, onSelect, onAdded, on
   const spaceOptions = workspaces.map((w) => ({ id: w.couple.id, label: labels.get(w.couple.id)! }))
   const activeIndex = TABS.findIndex((t) => t.id === tab)
 
+  // Full width on phones and tablets; a centered column on desktop, where it would look stretched.
   return (
-    <div className="mx-auto min-h-dvh max-w-lg px-4 pb-12">
-      <div className="sticky top-0 z-10 -mx-4 bg-[#f6f7fb]/80 px-4 pb-3 pt-[max(1rem,env(safe-area-inset-top))] backdrop-blur-xl">
+    <div className="min-h-dvh px-3 pb-12 lg:mx-auto lg:max-w-lg lg:px-4">
+      <div className="sticky top-0 z-10 -mx-3 bg-[#f6f7fb]/80 px-3 pb-3 lg:-mx-4 lg:px-4 pt-[max(1rem,env(safe-area-inset-top))] backdrop-blur-xl">
         <header className="mb-3 flex items-center gap-3">
           <Logo size={36} />
           <div className="min-w-0 flex-1">
