@@ -1,6 +1,7 @@
-import { ChevronDown, LogOut, Users } from 'lucide-react'
+import { ChevronDown, LogOut, ShieldCheck, Users } from 'lucide-react'
 import { lazy, Suspense, useState } from 'react'
 import { Button, InlineLoading, Logo } from '../components/ui'
+import { useIsAdmin } from '../features/admin/useIsAdmin'
 import { signOut } from '../features/auth/authService'
 import { labelSpaces } from '../features/workspace/labels'
 import { useToday } from '../hooks/useToday'
@@ -11,6 +12,8 @@ import { TodayTab } from './TodayTab'
 
 // Statistics pulls in the charting library, so load it only when opened.
 const StatsTab = lazy(() => import('./StatsTab').then((m) => ({ default: m.StatsTab })))
+// Only admins ever open this, so keep it out of everyone else's download.
+const AdminPage = lazy(() => import('./AdminPage').then((m) => ({ default: m.AdminPage })))
 
 const TABS = [
   { id: 'today', label: 'Today' },
@@ -18,6 +21,8 @@ const TABS = [
   { id: 'streaks', label: 'Streaks' },
 ] as const
 type TabId = (typeof TABS)[number]['id']
+/** Main tabs, the Space page, or the admin page. */
+type View = 'tabs' | 'space' | 'admin'
 
 type Props = {
   userId: string
@@ -34,7 +39,8 @@ type Props = {
 export function Dashboard({ userId, workspaces, workspace, onSelect, onAdded, onRefresh }: Props) {
   const { couple, members } = workspace
   const [tab, setTab] = useState<TabId>('today')
-  const [showSpace, setShowSpace] = useState(false)
+  const [view, setView] = useState<View>('tabs')
+  const admin = useIsAdmin()
   const today = useToday(couple.timezone)
   const labels = labelSpaces(workspaces)
   const spaceOptions = workspaces.map((w) => ({ id: w.couple.id, label: labels.get(w.couple.id)! }))
@@ -53,11 +59,11 @@ export function Dashboard({ userId, workspaces, workspace, onSelect, onAdded, on
           <Button
             variant="ghost"
             aria-label={members.length < 2 ? 'Your space (invite your partner)' : 'Your space'}
-            aria-pressed={showSpace}
+            aria-pressed={view === 'space'}
             className="relative"
             onClick={() => {
-              if (!showSpace) onRefresh()
-              setShowSpace((v) => !v)
+              if (view !== 'space') onRefresh()
+              setView((v) => (v === 'space' ? 'tabs' : 'space'))
             }}
           >
             <Users size={18} />
@@ -66,12 +72,22 @@ export function Dashboard({ userId, workspaces, workspace, onSelect, onAdded, on
               <span className="absolute right-1.5 top-1.5 size-2 rounded-full bg-indigo-500 ring-2 ring-[#f6f7fb]" aria-hidden />
             )}
           </Button>
+          {admin && (
+            <Button
+              variant="ghost"
+              aria-label="Admin"
+              aria-pressed={view === 'admin'}
+              onClick={() => setView((v) => (v === 'admin' ? 'tabs' : 'admin'))}
+            >
+              <ShieldCheck size={18} />
+            </Button>
+          )}
           <Button variant="ghost" aria-label="Sign out" onClick={() => void signOut()}>
             <LogOut size={18} />
           </Button>
         </header>
 
-        {!showSpace && (
+        {view === 'tabs' && (
           <nav aria-label="Sections" className="relative grid grid-cols-3 rounded-2xl bg-slate-900/[0.06] p-1">
             <span
               aria-hidden
@@ -95,14 +111,18 @@ export function Dashboard({ userId, workspaces, workspace, onSelect, onAdded, on
       </div>
 
       {/* Keyed by view so each switch replays the entrance animation. */}
-      <div key={showSpace ? 'space' : `${couple.id}:${tab}`} className="mt-4 animate-fade-up">
-        {showSpace ? (
+      <div key={view === 'tabs' ? `${couple.id}:${tab}` : view} className="mt-4 animate-fade-up">
+        {view === 'admin' && admin ? (
+          <Suspense fallback={<InlineLoading label="Loading…" />}>
+            <AdminPage onBack={() => setView('tabs')} />
+          </Suspense>
+        ) : view === 'space' ? (
           <SpacePage
             workspaces={workspaces}
             workspace={workspace}
             onSelect={onSelect}
             onAdded={onAdded}
-            onBack={() => setShowSpace(false)}
+            onBack={() => setView('tabs')}
           />
         ) : tab === 'today' ? (
           <TodayTab coupleId={couple.id} userId={userId} today={today} spaces={spaceOptions} />
