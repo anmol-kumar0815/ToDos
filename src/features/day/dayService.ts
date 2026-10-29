@@ -22,3 +22,13 @@ export async function setDayDone(userId: string, day: string, done: boolean) {
     )
   if (error) throw error
 }
+
+/**
+ * Asks the server to email the partner(s) that the user is done for `day`. The server checks
+ * everything itself and emails at most once per person and day; returns how many were sent.
+ */
+export async function notifyPartnerDone(day: string): Promise<number> {
+  const { data, error } = await supabase.functions.invoke('notify-partner-done', { body: { day } })
+  if (error) throw error
+  return (data as { sent?: number })?.sent ?? 0
+}

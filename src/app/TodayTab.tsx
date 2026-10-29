@@ -1,6 +1,6 @@
 import { ChevronLeft, ChevronRight } from 'lucide-react'
 import { useState } from 'react'
-import { DayStatusCard } from '../components/DayStatusCard'
+import { DayStatusCard, type EmailStatus } from '../components/DayStatusCard'
 import { ProgressCard } from '../components/ProgressCard'
 import type { SpaceOption } from '../components/TaskForm'
 import { TaskList } from '../components/TaskList'
@@ -11,7 +11,7 @@ import {
   saveTask,
   setTaskCompleted,
 } from '../features/tasks/taskService'
-import { setDayDone } from '../features/day/dayService'
+import { notifyPartnerDone, setDayDone } from '../features/day/dayService'
 import { useDayDone } from '../hooks/useDayDone'
 import { useTasks } from '../hooks/useTasks'
 import { formatLongDate, shiftDate } from '../lib/dates'
@@ -39,6 +39,9 @@ export function TodayTab({ coupleId, userId, partnerId, today, spaces }: Props) 
   const myDoneAt = dayStatus.doneAt.get(userId) ?? null
   const partnerDoneAt = partnerId ? (dayStatus.doneAt.get(partnerId) ?? null) : undefined
 
+  // Result of emailing the partner, tied to the day it was for.
+  const [email, setEmail] = useState<{ date: string; status: EmailStatus } | null>(null)
+
   async function changeDayDone(done: boolean) {
     setActionError(null)
     try {
@@ -46,7 +49,14 @@ export function TodayTab({ coupleId, userId, partnerId, today, spaces }: Props) 
       await dayStatus.reload()
     } catch (err) {
       setActionError(errorMessage(err))
+      return
     }
+    if (!done || !partnerId) return
+    // The mark itself has succeeded; the email is a best-effort extra.
+    const day = date
+    notifyPartnerDone(day)
+      .then((sent) => sent > 0 && setEmail({ date: day, status: 'sent' }))
+      .catch(() => setEmail({ date: day, status: 'failed' }))
   }
 
   /** Runs a mutation, then refreshes. Failures show in the banner; resolves to whether it succeeded. */
@@ -114,6 +124,7 @@ export function TodayTab({ coupleId, userId, partnerId, today, spaces }: Props) 
               mine={myDoneAt}
               partner={partnerDoneAt}
               onChange={changeDayDone}
+              email={email?.date === date ? email.status : null}
             />
           )}
           <TaskList
