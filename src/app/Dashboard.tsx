@@ -125,7 +125,13 @@ export function Dashboard({ userId, workspaces, workspace, onSelect, onAdded, on
             onBack={() => setView('tabs')}
           />
         ) : tab === 'today' ? (
-          <TodayTab coupleId={couple.id} userId={userId} today={today} spaces={spaceOptions} />
+          <TodayTab
+            coupleId={couple.id}
+            userId={userId}
+            partnerId={members.find((m) => m.user_id !== userId)?.user_id ?? null}
+            today={today}
+            spaces={spaceOptions}
+          />
         ) : (
           <Suspense fallback={<InlineLoading label="Loading…" />}>
             <StatsTab coupleId={couple.id} userId={userId} today={today} view={tab} />

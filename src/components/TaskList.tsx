@@ -1,4 +1,4 @@
-import { ArrowUpDown, ChevronDown } from 'lucide-react'
+import { ArrowUpDown, ChevronDown, Moon } from 'lucide-react'
 import { useState, type ReactNode } from 'react'
 import { SORT_OPTIONS, sortTasks, type SortKey } from '../lib/sort'
 import type { Task, TaskInput } from '../types'
@@ -12,6 +12,8 @@ type Props = {
   /** Spaces the user can add a task to, and the one currently shown. */
   spaces: SpaceOption[]
   currentSpaceId: string
+  /** When the partner marked the shown day done, or null. */
+  partnerDoneAt: string | null
   onAdd: (input: TaskInput, spaceIds: string[]) => Promise<void>
   onToggle: (task: Task) => void
   onEdit: (task: Task, input: TaskInput, spaceIds: string[]) => Promise<void>
@@ -81,7 +83,17 @@ function SortMenu({ value, onChange }: { value: SortKey; onChange: (key: SortKey
   )
 }
 
-export function TaskList({ tasks, userId, spaces, currentSpaceId, onAdd, onToggle, onEdit, onDelete }: Props) {
+export function TaskList({
+  tasks,
+  userId,
+  spaces,
+  currentSpaceId,
+  partnerDoneAt,
+  onAdd,
+  onToggle,
+  onEdit,
+  onDelete,
+}: Props) {
   const [editingId, setEditingId] = useState<string | null>(null)
   const [sort, setSort] = useState<SortKey>(loadSort)
   const mine = sortTasks(tasks.filter((t) => t.user_id === userId), sort)
@@ -135,7 +147,19 @@ export function TaskList({ tasks, userId, spaces, currentSpaceId, onAdd, onToggl
         )}
       </Card>
       <Card style={{ animationDelay: '120ms' }}>
-        <SectionTitle color={PARTNER} count={partner.length}>Partner's tasks</SectionTitle>
+        <SectionTitle
+          color={PARTNER}
+          count={partner.length}
+          action={
+            partnerDoneAt && (
+              <span className="animate-pop inline-flex items-center gap-1 rounded-full bg-indigo-50 px-2 py-0.5 text-xs font-medium text-indigo-700">
+                <Moon size={12} aria-hidden /> Done for the day
+              </span>
+            )
+          }
+        >
+          Partner's tasks
+        </SectionTitle>
         {partner.length === 0 ? (
           <p className="px-2 py-3 text-sm text-slate-500">No tasks yet</p>
         ) : (
