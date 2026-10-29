@@ -1,12 +1,10 @@
 import { format, parseISO } from 'date-fns'
-import { Mail, Moon } from 'lucide-react'
+import { Moon } from 'lucide-react'
 import { useState } from 'react'
 import { Card } from './ui'
 
 const YOU = '#2a78d6'
 const PARTNER = '#eb6834'
-
-export type EmailStatus = 'sent' | 'failed'
 
 const formatTime = (ts: string) => format(parseISO(ts), 'h:mm a')
 
@@ -18,12 +16,10 @@ type Props = {
   /** When your partner marked the day done; null if not, undefined if there's no partner yet. */
   partner: string | null | undefined
   onChange: (done: boolean) => Promise<void>
-  /** Whether your partner was emailed about today's mark. */
-  email?: EmailStatus | null
 }
 
 /** "Done for the day" for you (with the toggle) and your partner. Hidden for future days. */
-export function DayStatusCard({ date, today, mine, partner, onChange, email = null }: Props) {
+export function DayStatusCard({ date, today, mine, partner, onChange }: Props) {
   const [busy, setBusy] = useState(false)
   const isToday = date === today
   if (date > today) return null
@@ -44,14 +40,6 @@ export function DayStatusCard({ date, today, mine, partner, onChange, email = nu
         {mine ? (
           <div className="animate-pop">
             <DoneChip at={mine} />
-            {email === 'sent' && (
-              <p className="animate-fade-up mt-1 flex items-center gap-1 text-xs text-emerald-700">
-                <Mail size={12} aria-hidden /> Your partner was emailed
-              </p>
-            )}
-            {email === 'failed' && (
-              <p className="animate-fade-up mt-1 text-xs text-amber-700">Couldn't email your partner</p>
-            )}
             {isToday && (
               <button
                 onClick={() => void toggle(false)}

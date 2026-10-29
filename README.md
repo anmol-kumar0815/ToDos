@@ -34,15 +34,6 @@ The logic lives in `src/lib/stats.ts` and is covered by `npm test`.
 
 Sign up, then choose **Create space** and share the invite code privately. Your partner signs up and chooses **Join space**. You can belong to several spaces (create or join more from the **Your space** page and switch from the header). A space holds at most two people, and each person can edit or delete only their own tasks (enforced by RLS, not just the UI). Treat the invite code like a password.
 
-## Email when someone is done for the day (optional)
-
-When you mark yourself done for the day, your partner gets an email from the Gmail account you configure. It's sent by the `notify-partner-done` Edge Function, at most once per person per day. If it isn't set up, the app works the same, just without the email.
-
-1. Run `supabase/migrations/20261030000000_day_done_email.sql` in the SQL editor.
-2. On the Google account that will send the emails, turn on 2-Step Verification, then create an app password at <https://myaccount.google.com/apppasswords>.
-3. In Supabase: **Edge Functions → Secrets**, add `GMAIL_USER` (the Gmail address), `GMAIL_APP_PASSWORD` (the 16-character app password) and optionally `APP_URL` (your Vercel URL, used for the "Open ToDo's" button).
-4. **Edge Functions → Deploy a new function → Via editor**, name it `notify-partner-done`, paste `supabase/functions/notify-partner-done/index.ts`, and deploy. Or with the CLI: `npx supabase functions deploy notify-partner-done`.
-
 ## Scripts
 
 | Command | What it does |
