@@ -46,3 +46,8 @@ export function daysInRange(start: string, end: string): number {
 export function formatMonthDay(date: string): string {
   return format(parseISO(date), 'MMM d')
 }
+
+/** "29-10-2026" */
+export function formatDayMonthYear(date: string): string {
+  return format(parseISO(date), 'dd-MM-yyyy')
+}

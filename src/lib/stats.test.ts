@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest'
-import { daysInRange, formatDayWithOrdinal, shiftDate, todayIn } from './dates'
+import { backlogFrom, expandCarryOvers } from './carryover'
+import { daysInRange, formatDayMonthYear, formatDayWithOrdinal, shiftDate, todayIn } from './dates'
 import { resolveRange } from './ranges'
 import { formatDuration, splitMinutes, toMinutes } from './duration'
 import { sortTasks } from './sort'
@@ -19,6 +20,7 @@ function task(date: string, done: boolean, user = 'me'): Task {
     priority: null,
     link_id: null,
     task_date: date,
+    original_date: null,
     completed_at: done ? '2026-01-01T00:00:00Z' : null,
     created_at: '2026-01-01T00:00:00Z',
     updated_at: '2026-01-01T00:00:00Z',
@@ -263,5 +265,47 @@ describe('resolveRange', () => {
 
   it('counts days across a month boundary', () => {
     expect(daysInRange('2026-10-30', '2026-11-02')).toBe(4)
+  })
+})
+
+describe('carry-overs', () => {
+  // Carried from Oct 27 to today, Oct 29.
+  const carried = (done: boolean): Task => ({ ...task('2026-10-29', done), original_date: '2026-10-27' })
+
+  it('formats the backlog date as DD-MM-YYYY', () => {
+    expect(formatDayMonthYear('2026-10-29')).toBe('29-10-2026')
+    expect(formatDayMonthYear('2026-01-05')).toBe('05-01-2026')
+  })
+
+  it('tags carried tasks with the day they were first planned for', () => {
+    expect(backlogFrom(carried(false))).toBe('2026-10-27')
+    expect(backlogFrom(task('2026-10-29', false))).toBeNull()
+  })
+
+  it('shows a carried task, unfinished and moved, on each day it slipped from', () => {
+    const entries = expandCarryOvers([carried(true)])
+    expect(entries.map((e) => [e.task_date, e.completed_at !== null, e.movedTo])).toEqual([
+      ['2026-10-27', false, '2026-10-29'],
+      ['2026-10-28', false, '2026-10-29'],
+      ['2026-10-29', true, null],
+    ])
+  })
+
+  it('leaves tasks that never moved alone', () => {
+    const t = task('2026-10-29', false)
+    expect(expandCarryOvers([t])).toEqual([{ ...t, movedTo: null }])
+  })
+
+  it('keeps past days honest in daily stats', () => {
+    const tasks = [task('2026-10-28', true), { ...task('2026-10-29', true), original_date: '2026-10-28' }]
+    const days = dailyStats(expandCarryOvers(tasks), 'me', '2026-10-29', 2)
+    // Oct 28: one done, one that slipped to Oct 29.
+    expect([days[0].mine.done, days[0].mine.total]).toEqual([1, 2])
+    expect([days[1].mine.done, days[1].mine.total]).toEqual([1, 1])
+  })
+
+  it('does not change streaks: slipped days still count if something was completed', () => {
+    const tasks = [task('2026-10-28', true), { ...task('2026-10-29', false), original_date: '2026-10-28' }]
+    expect(streak(expandCarryOvers(tasks), '2026-10-29')).toEqual({ current: 1, best: 1 })
   })
 })

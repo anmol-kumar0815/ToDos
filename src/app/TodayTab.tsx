@@ -16,6 +16,7 @@ import { useDayDone } from '../hooks/useDayDone'
 import { useTasks } from '../hooks/useTasks'
 import { formatLongDate, shiftDate } from '../lib/dates'
 import { errorMessage } from '../lib/errors'
+import { expandCarryOvers } from '../lib/carryover'
 import { completion } from '../lib/stats'
 import type { Task, TaskInput } from '../types'
 
@@ -67,8 +68,10 @@ export function TodayTab({ coupleId, userId, partnerId, today, spaces }: Props) 
     if (!(await act(action))) throw new Error('Task was not saved')
   }
 
-  const mine = tasks.filter((t) => t.user_id === userId)
-  const partner = tasks.filter((t) => t.user_id !== userId)
+  // The day's own tasks plus read-only entries for those carried over from it.
+  const dayTasks = expandCarryOvers(tasks).filter((t) => t.task_date === date)
+  const mine = dayTasks.filter((t) => t.user_id === userId)
+  const partner = dayTasks.filter((t) => t.user_id !== userId)
 
   return (
     <div className="space-y-4">
@@ -117,7 +120,7 @@ export function TodayTab({ coupleId, userId, partnerId, today, spaces }: Props) 
             />
           )}
           <TaskList
-            tasks={tasks}
+            tasks={dayTasks}
             userId={userId}
             spaces={spaces}
             currentSpaceId={coupleId}

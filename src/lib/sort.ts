@@ -14,11 +14,11 @@ export const SORT_OPTIONS: { value: SortKey; label: string }[] = [
  * The base order is newest-first; the other sorts are stable on top of it, so ties stay
  * newest-first, and tasks missing the sorted value always go last.
  */
-export function sortTasks(tasks: Task[], key: SortKey): Task[] {
+export function sortTasks<T extends Task>(tasks: T[], key: SortKey): T[] {
   const newestFirst = [...tasks].reverse()
   if (key === 'newest') return newestFirst
 
-  const value = (t: Task): number | null =>
+  const value = (t: T): number | null =>
     key === 'priority' ? t.priority : t.duration_minutes
   const direction = key === 'time-desc' ? -1 : 1
 

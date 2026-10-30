@@ -12,6 +12,7 @@ A private, shared daily to-do app for two people. React + Vite + TypeScript on t
 - **Daily completion** = completed ÷ all tasks. No tasks shows "No tasks yet", never 100%.
 - **Weekly completion** = total completed ÷ total tasks over the seven days (not an average of daily percentages). The average-daily figure only counts days that have tasks.
 - **Streak** = consecutive calendar days on which at least one task was completed. Each person's streak uses their own tasks; the shared (Together) streak counts days when *both* of you completed at least one. A day with no completed task breaks it. Today, while it has nothing completed yet, neither extends nor breaks the *current* streak; *best* is tracked separately.
+- **Carry-over**: at midnight in the space's timezone, unfinished tasks from earlier days move to the new day (a scheduled `pg_cron` job every 15 minutes) and are tagged "Backlog from DD-MM-YYYY". A moved task still counts as unfinished on each day it slipped from, so past days' percentages stay accurate.
 - **Dates** are stored as Postgres `date` and computed in the workspace timezone (`couples.timezone`, default `Asia/Kolkata`), so a task stays on its day regardless of device timezone.
 
 The logic lives in `src/lib/stats.ts` and is covered by `npm test`.

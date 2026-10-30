@@ -1,5 +1,6 @@
 import { ArrowUpDown, ChevronDown, Moon } from 'lucide-react'
 import { useState, type ReactNode } from 'react'
+import type { DayTask } from '../lib/carryover'
 import { SORT_OPTIONS, sortTasks, type SortKey } from '../lib/sort'
 import type { Task, TaskInput } from '../types'
 import { TaskForm, type SpaceOption } from './TaskForm'
@@ -7,7 +8,8 @@ import { TaskItem } from './TaskItem'
 import { Card } from './ui'
 
 type Props = {
-  tasks: Task[]
+  /** The shown day's tasks, including read-only entries for tasks carried over from it. */
+  tasks: DayTask[]
   userId: string
   /** Spaces the user can add a task to, and the one currently shown. */
   spaces: SpaceOption[]
@@ -135,7 +137,14 @@ export function TaskList({
         ) : (
           <ul>
             {mine.map((t, i) => (
-              <TaskItem key={t.id} task={t} index={i} editable editing={t.id === editingId} {...handlers} />
+              <TaskItem
+                key={t.id}
+                task={t}
+                index={i}
+                editable={t.movedTo === null}
+                editing={t.id === editingId}
+                {...handlers}
+              />
             ))}
           </ul>
         )}

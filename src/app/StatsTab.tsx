@@ -4,6 +4,7 @@ import { StreakCard } from '../components/StreakCard'
 import { Card, InlineLoading } from '../components/ui'
 import { WeeklyChart } from '../components/WeeklyChart'
 import { useTasks } from '../hooks/useTasks'
+import { expandCarryOvers } from '../lib/carryover'
 import { daysInRange, formatDayWithOrdinal, shiftDate } from '../lib/dates'
 import { RANGE_OPTIONS, resolveRange, type DateRange, type RangePreset } from '../lib/ranges'
 import { dailyStats, streak, sumCompletion, togetherStreak } from '../lib/stats'
@@ -20,7 +21,9 @@ type Props = {
 
 export function StatsTab({ coupleId, userId, today, view }: Props) {
   const from = shiftDate(today, -(HISTORY_DAYS - 1))
-  const { tasks, loading, error, reload } = useTasks(coupleId, from, today)
+  const { tasks: fetched, loading, error, reload } = useTasks(coupleId, from, today)
+  // A carried-over task counts as unfinished on each day it slipped from.
+  const tasks = expandCarryOvers(fetched)
   const [preset, setPreset] = useState<RangePreset>('week')
   const [custom, setCustom] = useState<DateRange>(() => ({ start: shiftDate(today, -6), end: today }))
 

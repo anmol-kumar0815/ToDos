@@ -1,6 +1,8 @@
-import { Check, Clock, Link2, Pencil, Trash2 } from 'lucide-react'
+import { ArrowRight, Check, Clock, History, Link2, Pencil, Trash2 } from 'lucide-react'
 import { useEffect, useState } from 'react'
 import { getTaskSpaces } from '../features/tasks/taskService'
+import { backlogFrom, type DayTask } from '../lib/carryover'
+import { formatDayMonthYear } from '../lib/dates'
 import { errorMessage } from '../lib/errors'
 import { formatDuration } from '../lib/duration'
 import { priorityInfo } from '../lib/priority'
@@ -9,7 +11,7 @@ import { TaskForm, type SpaceOption } from './TaskForm'
 import { Button } from './ui'
 
 type Props = {
-  task: Task
+  task: DayTask
   editable: boolean
   index: number
   editing: boolean
@@ -38,6 +40,9 @@ export function TaskItem({
   const [confirmingDelete, setConfirmingDelete] = useState(false)
   const done = task.completed_at !== null
   const linked = task.link_id !== null
+  const backlog = backlogFrom(task)
+  // An earlier day's view of a task that was carried over: shown for the record, read-only.
+  const moved = task.movedTo !== null
   const priority = task.priority ? priorityInfo(task.priority) : null
 
   if (editing) {
@@ -60,7 +65,7 @@ export function TaskItem({
   return (
     <li
       style={{ animationDelay: `${Math.min(index, 8) * 45}ms` }}
-      className="group animate-fade-up flex items-start gap-3 rounded-2xl px-2 py-2.5 transition-colors hover:bg-slate-900/[0.03]"
+      className={`group animate-fade-up flex items-start gap-3 rounded-2xl px-2 py-2.5 transition-colors hover:bg-slate-900/[0.03] ${moved ? 'opacity-60' : ''}`}
     >
       <label className={`relative mt-0.5 flex shrink-0 ${editable ? 'cursor-pointer' : 'cursor-default'}`}>
         <input
@@ -87,11 +92,23 @@ export function TaskItem({
         >
           {task.title}
         </p>
-        {(priority || task.duration_minutes || linked) && (
+        {(priority || task.duration_minutes || linked || backlog || moved) && (
           <div className="mt-1 flex flex-wrap items-center gap-1.5">
             {priority && (
               <span className={`rounded-full px-2 py-0.5 text-[11px] font-semibold ring-1 ring-inset ${priority.badge}`}>
                 {priority.label}
+              </span>
+            )}
+            {backlog && (
+              <span className="inline-flex items-center gap-1 rounded-full bg-rose-50 px-2 py-0.5 text-[11px] font-medium text-rose-700 ring-1 ring-inset ring-rose-200">
+                <History size={11} aria-hidden />
+                Backlog from {formatDayMonthYear(backlog)}
+              </span>
+            )}
+            {moved && (
+              <span className="inline-flex items-center gap-1 rounded-full bg-slate-900/5 px-2 py-0.5 text-[11px] font-medium text-slate-600">
+                <ArrowRight size={11} aria-hidden />
+                Moved to {formatDayMonthYear(task.movedTo!)}
               </span>
             )}
             {linked && (

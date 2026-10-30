@@ -13,7 +13,11 @@ function forTask<Q extends { eq: (column: string, value: string) => Q }>(query: 
 
 const PAGE_SIZE = 1000
 
-/** Tasks for the couple with task_date in [from, to], paging past the API row cap. */
+/**
+ * Tasks for the couple planned on any day in [from, to], paging past the API row cap. That
+ * includes tasks carried over from a day in the range to a later one, so past days can still
+ * show what slipped.
+ */
 export async function getTasks(
   coupleId: string,
   from: string,
@@ -26,7 +30,8 @@ export async function getTasks(
       .select('*')
       .eq('couple_id', coupleId)
       .gte('task_date', from)
-      .lte('task_date', to)
+      // original_date <= task_date, so this matches tasks whose first or current day is <= to.
+      .or(`original_date.lte.${to},task_date.lte.${to}`)
       .order('created_at')
       .order('id')
       .range(offset, offset + PAGE_SIZE - 1)

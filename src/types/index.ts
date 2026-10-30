@@ -12,6 +12,8 @@ export type Task = {
   /** Shared by the copies of a task added to several spaces; null for a single-space task. */
   link_id: string | null
   task_date: string
+  /** The day it was first planned for, once it's been carried over to a later day. */
+  original_date: string | null
   completed_at: string | null
   created_at: string
   updated_at: string
